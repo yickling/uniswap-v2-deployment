@@ -1,0 +1,23 @@
+{
+  "name": "coder.finance",
+  "version": "1.0.0",
+  "description": "",
+  "main": "truffle-config.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@truffle/contract": "^4.3.13",
+    "@uniswap/v2-core": "^1.0.1",
+    "@uniswap/v2-periphery": "*",
+    "ethers": "^5.1.4"
+  },
+  "devDependencies": {
+    "@remix-project/remixd": "^0.3.5"
+  }
+}
