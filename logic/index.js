@@ -1,15 +1,15 @@
 const fs = require('fs')
-const Tx = require('ethereumjs-tx').Transaction
+const Tx = require('ethereumjs-tx')
 const Web3 = require('web3')
-const web3 = new Web3(new Web3.providers.HttpProvider("http://127.0.0.1:7545"));
-const privKey = '089e2368fbf0852baaf2dc5f24ab247d892a940f163549a317887f982c778079' // process.env.privateKey
+const web3 = new Web3(new Web3.providers.HttpProvider("https://rinkeby.infura.io/v3/583aa3fd29394208bee43d6d211c0762"));
+const privKey = '4776705768145a4e3c053120b01189a60d93166b65294b4f07203c39cefd358d' // process.env.privateKey
 
 // the account address that will send the test transaction
-const addressFrom = '0xAF6f7b21aBA0eFDa1931d31e950e19C80Bf4B772'
-const addressA = '0x1FF9016b97a3BFd1E5941EA9bBe2b77a7CA67fe8' // alphacoin
-const addressB = '0x3490eB0fEe318D050a8D69B5d818E5E0f6a0F86D' // betacoin
-const addressC = '0xB4b969a39DD69bcA9f9271Bd79388B264319708A' // sigmacoin
-const addressUniswapFactory = '0x612CCeAce5392A8D7f64362975E8f95D8ec4BF83'
+const addressFrom = '0x1D5c57053e306D97B3CA014Ca1deBd2882b325eD'
+const addressA = '0x217673271692b6181EA113d93384885436a9316a' // alphacoin
+const addressB = '0x4B0Fac9dE4F5444B0652628E832C0cbEbeCdc7Db' // betacoin
+const addressC = '0x315ee5B4Ac9692dB881ab710B180cc8B918E89a1' // sigmacoin
+const addressUniswapFactory = '0x2f950feed3ba831b8da510b62b741ac594188485'
 
 async function call(transaction, account) {
   return await transaction.call({from: account});
@@ -68,7 +68,7 @@ const createPair = async () => {
 }
 
 const getExchangeAddress = async () => {
-  const account = '0xAF6f7b21aBA0eFDa1931d31e950e19C80Bf4B772';
+  const account = '0x1D5c57053e306D97B3CA014Ca1deBd2882b325eD';
   const uniswap = new web3.eth.Contract(JSON.parse(factoryAbi), addressUniswapFactory);
 
   const exchange = await call(uniswap.methods.getPair(addressA, // alphacoin
@@ -198,7 +198,7 @@ const approveAndTransfer = async(addressPair, addressRouter) => {
 }
 
 const addLiquidity = async(addressRouter) => {
-  const account = '0xAF6f7b21aBA0eFDa1931d31e950e19C80Bf4B772';
+  const account = '0x1D5c57053e306D97B3CA014Ca1deBd2882b325eD';
   // add liquidity
   const TOKEN_ADDED = web3.utils.toHex(5) // web3.utils.toHex(5*10**18) 
   const ETH_ADDED = web3.utils.toHex(1*10**17) // 0.1 ETH
@@ -239,7 +239,7 @@ const addLiquidity = async(addressRouter) => {
 }
 
 const checkLiquidity = async(addressFactory) => {
-  const account = '0xAF6f7b21aBA0eFDa1931d31e950e19C80Bf4B772';
+  const account = '0x1D5c57053e306D97B3CA014Ca1deBd2882b325eD';
   const uniswap = new web3.eth.Contract(JSON.parse(factoryAbi), addressFactory);
   
   let pairsCount = await call(uniswap.methods.allPairsLength(), account);
@@ -247,9 +247,11 @@ const checkLiquidity = async(addressFactory) => {
 
   const addressAB = await call(uniswap.methods.getPair(addressA, // alphacoin
     addressB), account);  // betacoin
-
+  console.log('hello', addressAB)
   const pairAB = new web3.eth.Contract(JSON.parse(pairAbi), addressAB);
+  console.log('2', pairAB)
   const reserves = await call(pairAB.methods.getReserves());
+  console.log('3')
   console.error("Reserves for AlphaCoin-BetaCoin:", reserves)
 
   let balance = await call(pairAB.methods.balanceOf(addressFrom));
@@ -294,25 +296,26 @@ const swap = async(addressRouter, address1st, address2nd) => {
 
 (async function () {
   let result = undefined
-  const addressRouter = '0x9Fd8D7B999a2a433191FD0b02546417Dc9377EF7';
+  const addressRouter = '0xf74DB6F0A8609aD48a40ecf4069e7aBa6d50e1c1';
   console.info('======================================================')
   console.info('===========           Pre-swap           =============')
   console.info('======================================================')
-  await checkLiquidity(addressUniswapFactory)
-  // await createPair()
-  const addressPair = await getExchangeAddress()
-  // result = await approveAndTransfer(addressPair, addressRouter)
-  // result = await transferFrom(addressPair)
-  // await addLiquidity(addressRouter)
-  await swap(addressRouter, addressA, addressB)
-  console.info('======================================================')
-  console.info('===========         Post-swap            =============')
-  console.info('======================================================')
-  await checkLiquidity(addressUniswapFactory)
-  await swap(addressRouter, addressB, addressA)
-  console.info('======================================================')
-  console.info('===========       Post-swapback          =============')
-  console.info('======================================================')
-  await checkLiquidity(addressUniswapFactory)
-  // await swap() // swapback
+  // await checkLiquidity(addressUniswapFactory)
+  // result = await createPair()
+  // console.log(123, result)
+  // const addressPair = await getExchangeAddress()
+  // result = await approveAndTransfer("0x6BAE99E1dAF865C2936F3084a8FF6f6538D0cbBc", addressRouter)
+  // // result = await transferFrom(addressPair)
+  await addLiquidity(addressRouter)
+  // await swap(addressRouter, addressA, addressB)
+  // console.info('======================================================')
+  // console.info('===========         Post-swap            =============')
+  // console.info('======================================================')
+  // await checkLiquidity(addressUniswapFactory)
+  // await swap(addressRouter, addressB, addressA)
+  // console.info('======================================================')
+  // console.info('===========       Post-swapback          =============')
+  // console.info('======================================================')
+  // await checkLiquidity(addressUniswapFactory)
+  // // await swap() // swapback
 })()

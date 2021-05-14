@@ -59,17 +59,17 @@ module.exports = {
       from: process.env.DEPLOYER_ACCOUNT,
       timeoutBlocks: 800,
     },
-    ropsten: {
-      network_id: '3',
-      chain_id: 3,
+    rinkeby: {
+      network_id: '4',
+      chain_id: 4,
       provider: () => new HDWalletProvider(
         [process.env.DEPLOYER_PRIVATE_KEY],
-        'https://ropsten.infura.io/v3/583aa3fd29394208bee43d6d211c0762',
+        'https://rinkeby.infura.io/v3/583aa3fd29394208bee43d6d211c0762',
         0,
         1,
       ),
       gasPrice: 10000000000, // 10 gwei
-      gas: 1303500,
+      gas: 9000000,
       from: process.env.DEPLOYER_ACCOUNT,
       timeoutBlocks: 500,
     },
