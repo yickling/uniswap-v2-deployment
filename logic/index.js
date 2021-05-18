@@ -6,10 +6,14 @@ const privKey = '4776705768145a4e3c053120b01189a60d93166b65294b4f07203c39cefd358
 
 // the account address that will send the test transaction
 const addressFrom = '0x1D5c57053e306D97B3CA014Ca1deBd2882b325eD'
-const addressA = '0x217673271692b6181EA113d93384885436a9316a' // alphacoin
-const addressB = '0x4B0Fac9dE4F5444B0652628E832C0cbEbeCdc7Db' // betacoin
-const addressC = '0x315ee5B4Ac9692dB881ab710B180cc8B918E89a1' // sigmacoin
+const addressA = '0x217673271692b6181ea113d93384885436a9316a' // alphacoin
+const addressB = '0x4b0fac9de4f5444b0652628e832c0cbebecdc7db' // betacoin
+// const addressC = '0x315ee5b4ac9692db881ab710b180cc8b918e89a1' // sigmacoin
 const addressUniswapFactory = '0x2f950feed3ba831b8da510b62b741ac594188485'
+
+const overrides = {
+  gasLimit: 9999999
+}
 
 async function call(transaction, account) {
   return await transaction.call({from: account});
@@ -143,7 +147,8 @@ const transferFrom = async(addressPair) => {
 
 const approveAndTransfer = async(addressPair, addressRouter) => {
   // approve
-  const ERC20_TOKEN_ADDED = web3.utils.toHex(5 * 10 ** 18) 
+  // const ERC20_TOKEN_ADDED = web3.utils.toHex(5 * 10 ** 18) 
+  const ERC20_TOKEN_ADDED = 500 * 10 ** 2
   // const TOKEN_ADDED = web3.utils.toHex(5*10**18) 
   const alphacoin = new web3.eth.Contract(JSON.parse(alphaCoinAbi), addressA);
   const tx = alphacoin.methods.approve(
@@ -165,11 +170,11 @@ const approveAndTransfer = async(addressPair, addressRouter) => {
 
   // fire away!
   try {
+    console.log(tx1Data)
     let result = await sendSigned(tx1Data)
-    console.info(result)
-    console.info('successfully approved alphacoin: ', result.status)
+    console.info('successfully approved alphacoin: ', result)
 
-    const betacoin = new web3.eth.Contract(JSON.parse(betaCoinAbi), addressC);
+    const betacoin = new web3.eth.Contract(JSON.parse(betaCoinAbi), addressB);
     const tx2 = betacoin.methods.approve(
       addressRouter,
       ERC20_TOKEN_ADDED
@@ -188,8 +193,9 @@ const approveAndTransfer = async(addressPair, addressRouter) => {
       data: encodedAbi2
     }
 
+    console.log(tx2Data)
     result = await sendSigned(tx2Data)
-    console.info('successfully approved betacoin: ', result.status)
+    console.info('successfully approved betacoin: ', result)
 
     return result
   } catch (err) {
@@ -198,9 +204,9 @@ const approveAndTransfer = async(addressPair, addressRouter) => {
 }
 
 const addLiquidity = async(addressRouter) => {
-  const account = '0x1D5c57053e306D97B3CA014Ca1deBd2882b325eD';
   // add liquidity
-  const TOKEN_ADDED = web3.utils.toHex(5) // web3.utils.toHex(5*10**18) 
+  // const TOKEN_ADDED = web3.utils.toHex(5) // web3.utils.toHex(5*10**18) 
+  const TOKEN_ADDED = 500 * 10 ** 2
   const ETH_ADDED = web3.utils.toHex(1*10**17) // 0.1 ETH
   const router = new web3.eth.Contract(JSON.parse(routerAbi), addressRouter);
   const tx1 = router.methods.addLiquidity(
@@ -214,7 +220,7 @@ const addLiquidity = async(addressRouter) => {
     web3.utils.toHex(1720137849)// (~~(Date.now() / 1000)  + 360)// uint deadline
     );
 
-  let quote = await call(router.methods.quote(1, 1, 1), account);
+  let quote = await call(router.methods.quote(1, 1, 1), addressFrom);
   console.info('quote: ', quote)
   const encodedABIAddLiquidity = tx1.encodeABI();
   let txCount = await web3.eth.getTransactionCount(addressFrom)
@@ -237,6 +243,28 @@ const addLiquidity = async(addressRouter) => {
     console.error('error', err)
   }
 }
+
+
+const checkPair = async(addressPair) => {
+  const pairContract = new web3.eth.Contract(JSON.parse(pairAbi), addressPair);
+  
+  const reserves = await call(pairContract.methods.getReserves());
+  console.log("Reserves for AlphaCoin-BetaCoin:", reserves)
+
+  let balance = await call(pairContract.methods.balanceOf(addressFrom));
+  console.log(">> User Balance of AlphaCoin-BetaCoin:", balance)
+
+
+  balance = await call(pairContract.methods.balanceOf(addressFrom));
+  console.log(">> User Allowance of LP tokens:", balance)
+
+  const alphacoin = new web3.eth.Contract(JSON.parse(alphaCoinAbi), addressA);
+  const betacoin = new web3.eth.Contract(JSON.parse(betaCoinAbi), addressB);
+
+  console.log(">> Pair Balance AlphaCoin:", await call(alphacoin.methods.balanceOf(addressPair)))
+  console.log(">> Pair Balance BetaCoin:", await call(betacoin.methods.balanceOf(addressPair)))
+}
+
 
 const checkLiquidity = async(addressFactory) => {
   const account = '0x1D5c57053e306D97B3CA014Ca1deBd2882b325eD';
@@ -303,8 +331,11 @@ const swap = async(addressRouter, address1st, address2nd) => {
   // await checkLiquidity(addressUniswapFactory)
   // result = await createPair()
   // console.log(123, result)
-  // const addressPair = await getExchangeAddress()
-  // result = await approveAndTransfer("0x6BAE99E1dAF865C2936F3084a8FF6f6538D0cbBc", addressRouter)
+  const addressPair = await getExchangeAddress() //0x6bae99e1daf865c2936f3084a8ff6f6538d0cbbc
+  console.log("LP pair: ", addressPair)
+  await checkPair(addressPair)
+  result = await approveAndTransfer(addressPair, addressRouter)
+  await checkPair(addressPair)
   // // result = await transferFrom(addressPair)
   await addLiquidity(addressRouter)
   // await swap(addressRouter, addressA, addressB)
